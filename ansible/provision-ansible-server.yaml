@@ -1,0 +1,38 @@
+---
+- name: open ports on default sg
+  hosts: localhost
+  gather_facts: False
+  tasks:
+    - name: open ssh and browser access port
+      amazon.aws.ec2_security_group:
+        name: default
+        description: "Default security group for VPC"
+        purge_rules: false
+        rules:
+          - proto: tcp
+            from_port: 22
+            to_port: 22
+            cidr_ip: xxxxxxxxx
+            rule_desc: "Allow ssh from my ip"
+
+- name: start an ansible server instance
+  hosts: localhost
+  gather_facts: False
+  vars_files:
+    - group-vars/vault.yaml
+    - group-vars/all.yaml
+  tasks:
+    - name: Create an instance
+      amazon.aws.ec2_instance:
+        name: "ansible-server"
+        key_name: "{{ my_server_key }}"
+        vpc_subnet_id: "{{ vpc_subnet_id_1 }}"
+        instance_type: t2.micro
+        exact_count: 1
+        region: "{{ region_name }}"
+        network_interfaces:
+          - assign_public_ip: true
+        image_id: "{{ image_id }}"
+        tags:
+          server: ansible
+      register: server_info
