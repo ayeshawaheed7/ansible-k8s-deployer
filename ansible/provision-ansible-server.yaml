@@ -12,7 +12,7 @@
           - proto: tcp
             from_port: 22
             to_port: 22
-            cidr_ip: xxxxxxxxx
+            cidr_ip: "{{ my_ip }}"
             rule_desc: "Allow ssh from my ip"
 
 - name: start an ansible server instance

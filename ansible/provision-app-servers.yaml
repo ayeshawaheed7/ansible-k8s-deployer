@@ -14,6 +14,9 @@
         tags:
           Name: Private Subnet
       register: private_subnet
+    - name: Set fact for private subnet id
+      ansible.builtin.set_fact: 
+        private_subnet_id: "{{ private_subnet.subnet.id }}"
     - name: List all EIP addresses in the current region.
       amazon.aws.ec2_eip_info:
       register: regional_eip_addresses
@@ -33,33 +36,28 @@
         vpc_id: "{{ vpc_id }}"
         region: "{{ region_name }}"
         subnets:
-          - "{{ private_subnet.subnet.id }}"
+          - "{{ private_subnet_id }}"
         routes:
           - dest: 0.0.0.0/0
             nat_gateway_id: "{{ nat_gateway.nat_gateway_id }}"
       register: nat_route_table
 
-
-
-
-# - name: start an database server
-#   hosts: localhost
-#   gather_facts: False
-#   vars_files:
-#     - group-vars/vault.yaml
-#     - group-vars/all.yaml
-#   tasks:
-#     - name: Create an instance
-#       amazon.aws.ec2_instance:
-#         name: "database-server"
-#         key_name: "{{ my_server_key }}"
-#         vpc_subnet_id: "{{ vpc_subnet_id }}"
-#         instance_type: t2.micro
-#         exact_count: 1
-#         region: "{{ region_name }}"
-#         network_interfaces:
-#           - assign_public_ip: true
-#         image_id: "{{ image_id }}"
-#         tags:
-#           server: database
-#       register: server_info
+- name: start an database server
+  hosts: localhost
+  gather_facts: False
+  vars_files:
+    - group-vars/vault.yaml
+    - group-vars/all.yaml
+  tasks:
+    - name: Create an instance
+      amazon.aws.ec2_instance:
+        name: "database-server"
+        key_name: "{{ my_server_key }}"
+        vpc_subnet_id: "{{ private_subnet_id }}"
+        instance_type: t2.micro
+        exact_count: 1
+        region: "{{ region_name }}"
+        image_id: "{{ image_id }}"
+        tags:
+          server: database
+      register: server_info
