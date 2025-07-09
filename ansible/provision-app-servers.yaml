@@ -17,27 +17,31 @@
     - name: Set fact for private subnet id
       ansible.builtin.set_fact: 
         private_subnet_id: "{{ private_subnet.subnet.id }}"
+    - name: List all EIP addresses in the current region.
+      amazon.aws.ec2_eip_info:
+      register: regional_eip
     - name: allocate a new elastic IP inside a VPC in ap-southeast-1
       amazon.aws.ec2_eip:
         region: "{{ region_name }}"
         in_vpc: true
       register: eip
+      when: regional_eip.addresses | length == 0
     - debug: msg={{ eip }}
     - name: Create public nat gateway in one of the public subnet
       amazon.aws.ec2_vpc_nat_gateway:
         state: present
         subnet_id: "{{ vpc_subnet_id_2 }}"
-        allocation_id: "{{ eip.allocation_id }}"
+        allocation_id: "{{ eip.allocation_id if (regional_eip.addresses | length == 0) else regional_eip.addresses[0].allocation_id}}"
         connectivity_type: "public"
         region: "{{ region_name }}"
+        wait: true
       register: nat_gateway
-    - name: Pause for 5 seconds to query nat_getway info
-      ansible.builtin.pause:
-        seconds: 5
-    - name: Set up NAT-protected route table
+    - name: Set up NAT route table
       amazon.aws.ec2_vpc_route_table:
         vpc_id: "{{ vpc_id }}"
         region: "{{ region_name }}"
+        tags:
+          Name: nat_rtb
         subnets:
           - "{{ private_subnet_id }}"
         routes:
