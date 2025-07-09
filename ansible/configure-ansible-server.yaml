@@ -1,0 +1,10 @@
+- name: Ensure ansible and boto3 are installed
+  hosts: tag_name_server_ansible
+  become: yes
+  tasks:
+    - name: Install ansible and boto3
+      dnf:
+        name: 
+          - ansible-core
+          - python3-boto3
+        update_cache: yes
