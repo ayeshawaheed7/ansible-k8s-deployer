@@ -1,0 +1,56 @@
+---
+# - name: Configure database server
+#   hosts: tag_name_server_database
+#   vars_files:
+#     - group-vars/vault.yaml
+#     - group-vars/database-values.yaml
+#   roles:
+#     - role: geerlingguy.mysql
+#       become: true
+#   tasks:
+#     - name: Verify mysql is running
+#       shell: ps aux | grep mysql
+#       register: app_status
+#     - debug: msg={{ app_status }}
+
+- name: Build jar file
+  hosts: localhost
+  vars_files:
+    - group-vars/all.yaml
+  tasks:
+    - name: Build jar file
+      command:
+        chdir: "{{ project_dir }}"
+        cmd: gradle clean build
+
+- name: Configure web server
+  hosts: tag_name_server_web
+  vars_files:
+    - group-vars/vault.yaml
+    - group-vars/all.yaml
+  tasks:
+    - name: Install java 17 and net-tools
+      dnf:
+        name:
+          - java-17-amazon-corretto-headless
+          - net-tools
+        update_cache: yes
+      become: yes
+    - name: Find latest jar file locally (exluding .plain.jar file)
+      shell: ls {{ project_dir }}build/libs/my-app-*.jar | grep -v plain
+      register: jar_file
+      delegate_to: localhost
+    - name: Copy jar file to web server
+      copy:
+        src: "{{ jar_file.stdout }}"
+        dest: /home/ec2-user/my-app.jar
+    - name: Start the application
+      command:
+        chdir: /home/ec2-user
+        cmd: java -jar my-app.jar &
+      async: 1000
+      poll: 0
+    - name: Verify app
+      shell: ps aux | grep my-app.jar
+      register: app_status
+    - debug: msg={{ app_status.stdout_lines }}

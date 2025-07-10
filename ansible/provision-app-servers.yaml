@@ -1,75 +1,91 @@
 ---
-- name: Create subnet for database servers
-  hosts: localhost
-  gather_facts: False
-  vars_files:
-    - group-vars/all.yaml
-  tasks:
-    - name: Create subnet
-      amazon.aws.ec2_vpc_subnet:
-        state: present
-        vpc_id: "{{ vpc_id }}"
-        map_public: false
-        cidr: 172.31.48.0/20
-        tags:
-          Name: Private Subnet
-      register: private_subnet
-    - name: Set fact for private subnet id
-      ansible.builtin.set_fact: 
-        private_subnet_id: "{{ private_subnet.subnet.id }}"
-    - name: List all EIP addresses in the current region.
-      amazon.aws.ec2_eip_info:
-      register: regional_eip
-    - name: allocate a new elastic IP inside a VPC in ap-southeast-1
-      amazon.aws.ec2_eip:
-        region: "{{ region_name }}"
-        in_vpc: true
-      register: eip
-      when: regional_eip.addresses | length == 0
-    - debug: msg={{ eip }}
-    - name: Create public nat gateway in one of the public subnet
-      amazon.aws.ec2_vpc_nat_gateway:
-        state: present
-        subnet_id: "{{ vpc_subnet_id_2 }}"
-        allocation_id: "{{ eip.allocation_id if (regional_eip.addresses | length == 0) else regional_eip.addresses[0].allocation_id}}"
-        connectivity_type: "public"
-        region: "{{ region_name }}"
-        wait: true
-      register: nat_gateway
-    - name: Set up NAT route table
-      amazon.aws.ec2_vpc_route_table:
-        vpc_id: "{{ vpc_id }}"
-        region: "{{ region_name }}"
-        tags:
-          Name: nat_rtb
-        subnets:
-          - "{{ private_subnet_id }}"
-        routes:
-          - dest: 0.0.0.0/0
-            nat_gateway_id: "{{ nat_gateway.nat_gateway_id }}"
-      register: nat_route_table
+# - name: Create subnet for database servers
+#   hosts: localhost
+#   gather_facts: False
+#   vars_files:
+#     - group-vars/all.yaml
+#   tasks:
+#     - name: Create subnet
+#       amazon.aws.ec2_vpc_subnet:
+#         state: present
+#         vpc_id: "{{ vpc_id }}"
+#         map_public: false
+#         cidr: 172.31.48.0/20
+#         tags:
+#           Name: Private Subnet
+#       register: private_subnet
+#     - name: Set fact for private subnet id
+#       ansible.builtin.set_fact: 
+#         private_subnet_id: "{{ private_subnet.subnet.id }}"
+#     - name: List all EIP addresses in the current region.
+#       amazon.aws.ec2_eip_info:
+#       register: regional_eip
+#     - name: allocate a new elastic IP inside a VPC in ap-southeast-1
+#       amazon.aws.ec2_eip:
+#         region: "{{ region_name }}"
+#         in_vpc: true
+#       register: eip
+#       when: regional_eip.addresses | length == 0
+#     - debug: msg={{ eip }}
+#     - name: Create public nat gateway in one of the public subnet
+#       amazon.aws.ec2_vpc_nat_gateway:
+#         state: present
+#         subnet_id: "{{ vpc_subnet_id_2 }}"
+#         allocation_id: "{{ eip.allocation_id if (regional_eip.addresses | length == 0) else regional_eip.addresses[0].allocation_id}}"
+#         connectivity_type: "public"
+#         region: "{{ region_name }}"
+#         wait: true
+#       register: nat_gateway
+#     - name: Set up NAT route table
+#       amazon.aws.ec2_vpc_route_table:
+#         vpc_id: "{{ vpc_id }}"
+#         region: "{{ region_name }}"
+#         tags:
+#           Name: nat_rtb
+#         subnets:
+#           - "{{ private_subnet_id }}"
+#         routes:
+#           - dest: 0.0.0.0/0
+#             nat_gateway_id: "{{ nat_gateway.nat_gateway_id }}"
+#       register: nat_route_table
 
-- name: start an database server
+# - name: start an database server
+#   hosts: localhost
+#   gather_facts: False
+#   vars_files:
+#     - group-vars/vault.yaml
+#     - group-vars/all.yaml
+#   tasks:
+#     - name: Create an instance
+#       amazon.aws.ec2_instance:
+#         name: "database-server"
+#         key_name: "{{ my_server_key }}"
+#         vpc_subnet_id: "{{ private_subnet_id }}"
+#         instance_type: t2.micro
+#         exact_count: 1
+#         region: "{{ region_name }}"
+#         image_id: "{{ image_id }}"
+#         network_interfaces:
+#           - assign_public_ip: false
+#         tags:
+#           server: database
+#       register: server_info
+
+- name: open ports on default sg
   hosts: localhost
   gather_facts: False
-  vars_files:
-    - group-vars/vault.yaml
-    - group-vars/all.yaml
   tasks:
-    - name: Create an instance
-      amazon.aws.ec2_instance:
-        name: "database-server"
-        key_name: "{{ my_server_key }}"
-        vpc_subnet_id: "{{ private_subnet_id }}"
-        instance_type: t2.micro
-        exact_count: 1
-        region: "{{ region_name }}"
-        image_id: "{{ image_id }}"
-        network_interfaces:
-          - assign_public_ip: false
-        tags:
-          server: database
-      register: server_info
+    - name: open ssh and browser access port
+      amazon.aws.ec2_security_group:
+        name: default
+        description: "Default security group for VPC"
+        purge_rules: false
+        rules:
+          - proto: tcp
+            from_port: 8080
+            to_port: 8080
+            cidr_ip: 0.0.0.0/0
+            rule_desc: "Allow all traffic"
 
 - name: start an web server instance
   hosts: localhost
