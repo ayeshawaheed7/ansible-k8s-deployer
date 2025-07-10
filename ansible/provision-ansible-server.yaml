@@ -2,6 +2,8 @@
 - name: open ports on default sg
   hosts: localhost
   gather_facts: False
+  vars_files:
+    - group-vars/vault.yaml
   tasks:
     - name: open ssh and browser access port
       amazon.aws.ec2_security_group:
