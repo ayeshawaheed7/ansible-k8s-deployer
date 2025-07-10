@@ -32,6 +32,7 @@
         instance_type: t2.micro
         exact_count: 1
         region: "{{ region_name }}"
+        iam_instance_profile: AnsibleEC2ProvisioningProfile
         network_interfaces:
           - assign_public_ip: true
         image_id: "{{ image_id }}"

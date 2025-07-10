@@ -25,7 +25,7 @@
                   }
               ]
           }
-        state: absent
+        state: present
 
     - name: Create DescribeInstances IAM Policy
       amazon.aws.iam_managed_policy:
@@ -73,7 +73,7 @@
             ]
           }
 
-        state: absent
+        state: present
 
     - name: Attach Policy to Role
       command: >
@@ -87,5 +87,5 @@
       amazon.aws.iam_instance_profile:
         name: AnsibleEC2ProvisioningProfile
         role: AnsibleEC2ProvisioningRole
-        state: absent
+        state: present
       register: profile_result

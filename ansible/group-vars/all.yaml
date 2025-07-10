@@ -2,6 +2,5 @@ vpc_id: vpc-098bf07e2313bd530
 vpc_subnet_id_1: subnet-051551abca5776fcf
 vpc_subnet_id_2: subnet-0deeb29afa060b78c
 region_name: ap-southeast-1
-python_interpreter: /usr/bin/python3
 instance_user: ec2-user
 image_id: ami-0a3ece531caa5d49d
