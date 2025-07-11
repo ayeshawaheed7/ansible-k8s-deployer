@@ -9,6 +9,7 @@
       amazon.aws.ec2_vpc_subnet:
         state: present
         vpc_id: "{{ vpc_id }}"
+        region: "{{ region_name }}"
         map_public: false
         cidr: 172.31.48.0/20
         tags:
@@ -19,6 +20,7 @@
         private_subnet_id: "{{ private_subnet.subnet.id }}"
     - name: List all EIP addresses in the current region.
       amazon.aws.ec2_eip_info:
+        region: "{{ region_name }}"
       register: regional_eip
     - name: allocate a new elastic IP inside a VPC in ap-southeast-1
       amazon.aws.ec2_eip:
@@ -65,8 +67,8 @@
         exact_count: 1
         region: "{{ region_name }}"
         image_id: "{{ image_id }}"
-        network_interfaces:
-          - assign_public_ip: false
+        network:
+          assign_public_ip: false
         tags:
           server: database
       register: server_info
@@ -74,6 +76,8 @@
 - name: open ports on default sg
   hosts: localhost
   gather_facts: False
+  vars_files:
+    - group-vars/all.yaml
   tasks:
     - name: open ssh and browser access port
       amazon.aws.ec2_security_group:
@@ -103,8 +107,8 @@
         instance_type: t2.micro
         exact_count: 1
         region: "{{ region_name }}"
-        network_interfaces:
-          - assign_public_ip: true
+        network:
+          assign_public_ip: true
         image_id: "{{ image_id }}"
         tags:
           server: web

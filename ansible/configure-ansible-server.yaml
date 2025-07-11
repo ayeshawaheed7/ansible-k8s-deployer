@@ -3,31 +3,37 @@
   hosts: tag_name_server_ansible
   become: yes
   tasks:
+    - name: Update apt and cache
+      apt: update_cache=yes force_apt_get=true cache_valid_time=3600
     - name: Install ansible and boto3
-      dnf:
-        name: 
+      apt:
+        pkg: 
           - ansible-core
           - python3-boto3
-        update_cache: yes
 
 - name: Copy ansible playbook and configurations to ansible control server
   hosts: tag_name_server_ansible
   vars_files:
     - group-vars/vault.yaml
+    - group-vars/all.yaml
   tasks:
     - name: Copy ansible playbook
       copy:
         src: "{{ item }}"
-        dest: /home/ec2-user
+        dest: /home/{{ instance_user }}
       with_fileglob: "*-app-servers.yaml"
     - name: Copy ansible.cfg
       copy:
         src: ansible.cfg
-        dest: /home/ec2-user
+        dest: /home/{{ instance_user }}
+    - name: Copy inventory
+      copy:
+        src: inventory_aws_ec2.yaml
+        dest: /home/{{ instance_user }}
     - name: Copy vars folder
       copy:
         src: group-vars
-        dest: /home/ec2-user
+        dest: /home/{{ instance_user }}
     - name: Install geerlingguy.mysql role
       community.general.ansible_galaxy_install:
         type: role
@@ -40,7 +46,15 @@
     - name: Copy ssh key
       copy:
         src: "{{ private_server_key_location }}"
-        dest: /home/ec2-user/.ssh
-        owner: ec2-user
-        group: ec2-user
+        dest: /home/{{ instance_user }}/.ssh
+        owner: "{{ instance_user }}"
+        group: "{{ instance_user }}"
         mode: '0600'
+    - name: Find latest jar file locally (exluding .plain.jar file)
+      shell: ls ../build/libs/my-app-*.jar | grep -v plain
+      register: jar_file
+      delegate_to: localhost
+    - name: Copy jar file
+      copy:
+        src: "{{ jar_file.stdout }}"
+        dest: /home/{{ instance_user }}/my-app.jar
