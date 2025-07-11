@@ -1,53 +1,46 @@
 ---
-# - name: Configure database server
-#   hosts: tag_name_server_database
-#   vars_files:
-#     - group-vars/vault.yaml
-#     - group-vars/database-values.yaml
-#   roles:
-#     - role: geerlingguy.mysql
-#       become: true
-#   tasks:
-#     - name: Verify mysql is running
-#       shell: ps aux | grep mysql
-#       register: app_status
-#     - debug: msg={{ app_status }}
-
-- name: Build jar file
-  hosts: localhost
+- name: Configure database server
+  hosts: tag_name_server_database
+  gather_facts: yes
   vars_files:
-    - group-vars/all.yaml
+    - group-vars/vault.yaml
+    - group-vars/database-values.yaml
+  roles:
+    - role: geerlingguy.mysql
+      become: true
   tasks:
-    - name: Build jar file
-      command:
-        chdir: "{{ project_dir }}"
-        cmd: gradle clean build
+    - name: Verify mysql is running
+      shell: ps aux | grep mysql
+      register: app_status
+    - debug: msg={{ app_status.stdout_lines }}
 
 - name: Configure web server
   hosts: tag_name_server_web
+  gather_facts: true
   vars_files:
     - group-vars/vault.yaml
     - group-vars/all.yaml
   tasks:
-    - name: Install java 17 and net-tools
-      dnf:
-        name:
-          - java-17-amazon-corretto-headless
-          - net-tools
-        update_cache: yes
+    - name: Update apt and cache
+      apt: update_cache=yes force_apt_get=true cache_valid_time=3600
       become: yes
-    - name: Find latest jar file locally (exluding .plain.jar file)
-      shell: ls {{ project_dir }}build/libs/my-app-*.jar | grep -v plain
-      register: jar_file
-      delegate_to: localhost
+    - name: Install java 17 and net-tools
+      apt:
+        pkg:
+          - openjdk-17-jre-headless
+          - net-tools
+      become: yes
     - name: Copy jar file to web server
       copy:
-        src: "{{ jar_file.stdout }}"
-        dest: /home/ec2-user/my-app.jar
-    - name: Start the application
-      command:
-        chdir: /home/ec2-user
-        cmd: java -jar my-app.jar &
+        src: my-app.jar
+        dest: /home/{{ instance_user }}/my-app.jar
+    - name: Start the application with needed env vars
+      command: java -jar my-app.jar
+      environment:
+        DB_USER: my-user
+        DB_PWD: "{{ mysql_user_password }}"
+        DB_SERVER: "{{ hostvars[groups['tag_name_server_database'][0]]['private_ip_address'] }}"
+        DB_NAME: my-app-db
       async: 1000
       poll: 0
     - name: Verify app
