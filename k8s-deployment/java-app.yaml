@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: java-app
+  labels:
+    app: java-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: java-app
+  template:
+    metadata:
+      labels:
+        app: java-app
+    spec:
+      imagePullSecrets:
+        - name: my-registry-key
+      containers:
+        - name: java-app
+          image: ayeshawaheed12/demo-app:ans-java-1.0
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: db-user
+            - name: DB_PWD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: db-pass
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: db-name
+            - name: DB_SERVER
+              valueFrom:
+                configMapKeyRef:
+                  name: db-configmap
+                  key: db-server
+---
+apiVersion: v1
+kind: Service
+metadata: 
+  name: java-app-service
+spec:
+  selector:
+    app: java-app
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+
+          
