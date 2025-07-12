@@ -6,11 +6,11 @@
   tasks:
     - name: Deploy DB configmap
       kubernetes.core.k8s:
-        src: ../k8s-deployment/db-configmap.yaml
+        src: ../k8s-manifests/db-configmap.yaml
         state: present
     - name: Deploy DB secret
       kubernetes.core.k8s:
-        src: ../k8s-deployment/db-secret.yaml
+        src: ../k8s-manifests/db-secret.yaml
         state: present
     - name: Deploy docker registry secret
       kubernetes.core.k8s:
@@ -35,11 +35,11 @@
               }}
     - name: Deploy MYSQL db
       kubernetes.core.k8s:
-        src: ../k8s-deployment/mysql/mysql-single-replica/mysql.yaml
+        src: ../k8s-manifests/mysql/mysql-single-replica/mysql.yaml
         state: present
     - name: Deploy java app
       kubernetes.core.k8s:
-        src: ../k8s-deployment/java-app.yaml
+        src: ../k8s-manifests/java-app.yaml
         state: present
     - name: Deploy nginx-ingress controller
       kubernetes.core.helm:
@@ -57,5 +57,5 @@
         seconds: 10
     - name: Deploy java app ingress
       kubernetes.core.k8s:
-        src: ../k8s-deployment/java-app-ingress.yaml
+        src: ../k8s-manifests/java-app-ingress.yaml
         state: present
