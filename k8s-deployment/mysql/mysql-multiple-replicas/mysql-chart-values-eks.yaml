@@ -1,0 +1,18 @@
+architecture: replication
+auth:
+  rootPassword: my-secret-pass
+  database: my-app-db
+  username: my-user
+  password: my-pass
+
+primary:
+  persistence:
+    storageClass: gp2
+
+secondary:
+  replicaCount: 2
+  persistence:
+    storageClass: gp2
+
+volumePermissions:
+  enabled: true
