@@ -1,19 +1,17 @@
 ---
-- name: Deploy app on k8s
+- name: Deploy on k8s
   hosts: localhost
   vars_files:
     - group-vars/vault.yaml
   tasks:
     - name: Deploy DB configmap
       kubernetes.core.k8s:
-        src: ../db-configmap.yaml
+        src: ../k8s-deployment/db-configmap.yaml
         state: present
-        api_version: v1
     - name: Deploy DB secret
       kubernetes.core.k8s:
-        src: ../db-secret.yaml
+        src: ../k8s-deployment/db-secret.yaml
         state: present
-        api_version: v1
     - name: Deploy docker registry secret
       kubernetes.core.k8s:
         state: present
@@ -24,35 +22,40 @@
             name: my-registry-key
             namespace: default
           type: kubernetes.io/dockerconfigjson
-          spec:
-            dockerconfigjson: |
+          data:
+            .dockerconfigjson: |
               {{
                 {
                   "auths": {
                     "https://index.docker.io/v1/": {
-                        "auth": (docker_username + ":" + docker_password) | b64encode
+                      "auth": (docker_username + ":" + docker_password) | b64encode
                     }
                   }
-                 }
                 } | to_json | b64encode
               }}
     - name: Deploy MYSQL db
       kubernetes.core.k8s:
-        src: ../mysql.yaml
+        src: ../k8s-deployment/mysql/mysql-single-replica/mysql.yaml
         state: present
-        api_version: v1
     - name: Deploy java app
       kubernetes.core.k8s:
-        src: ../java-app.yaml
+        src: ../k8s-deployment/java-app.yaml
         state: present
-        api_version: v1
     - name: Deploy nginx-ingress controller
       kubernetes.core.helm:
-        name: nginx-ingress
-        chart_ref: ingress-nginx/ingress-nginx
+        state: present
+        name: ingress-controller
         release_namespace: ingress
+        create_namespace: true
+        chart_ref: ingress-nginx/ingress-nginx
+        values: 
+          controller:
+            publishService:
+              enabled: true
+    - name: Wait for nginx-ingress controller to deploy
+      pause:
+        seconds: 10
     - name: Deploy java app ingress
       kubernetes.core.k8s:
-        src: ../java-app-ingress.yaml
+        src: ../k8s-deployment/java-app-ingress.yaml
         state: present
-        api_version: v1
