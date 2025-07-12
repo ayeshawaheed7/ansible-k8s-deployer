@@ -10,7 +10,7 @@ A robust and automated setup was required to deploy and manage a Java web applic
 
 * Automate the setup of infrastructure and applications from scratch.
 * Secure the database by restricting external access.
-* Enable reliable deployment of a Java web app and MySQL DB on AWS.
+* Enable the reliable deployment of a Java web app and MySQL DB on AWS.
 * Transition to Kubernetes for better maintainability and scalability.
 * Improve database availability using a replicated setup.
 
@@ -24,23 +24,50 @@ The project is implemented in three key phases:
 
 **Infrastructure:**
 
-* Provisioned an **Ansible control node** in a public subnet.
-* Created two EC2 instances within the same VPC:
+* A dedicated **Ansible control server** is provisioned in a public subnet.
+* Two EC2 instances are created within the same VPC:
 
-  * A **web server** to host the Java application (with public access).
-  * A **database server** to run MySQL (with **no public IP**).
+  * A **web server** to host the Java application (with a public IP).
+  * A **database server** for MySQL (without a public IP, isolated in a private subnet).
 
-**Automation:**
+**Execution Flow:**
 
-* Ansible playbooks provision and configure all EC2 instances.
-* Tools are installed on the Ansible server and all necessary playbooks are copied to it.
-* The MySQL database is installed using the official `geerlingguy.mysql` Ansible role.
-* The Java application is deployed and exposed via `http://<web-server-ip>:8080`.
+The provisioning and configuration are broken into logical playbooks to follow best practices:
+
+1. **`ec2-provisioning-iam-role.yml`**
+
+   * Instead of passing AWS credentials directly, this playbook creates an IAM role with least privilege access.
+   * This enables passwordless, scoped access to provision resources securely and aligns with AWS security best practices.
+
+2. **`provision-ansible-server.yml`**
+
+   * Provision the dedicated Ansible server in a public subnet.
+
+3. **`configure-ansible-server.yml`**
+
+   * Installs required tools (e.g., Ansible, Git) on the Ansible server.
+   * Copies all necessary playbooks and configurations to the server for downstream provisioning.
+
+At this point, SSH into the **Ansible server**, and from there:
+
+4. **`provision-app-servers.yml`**
+
+   * Provision the two application servers: one for MySQL (private subnet) and one for the Java web app (public subnet).
+
+5. **`configure-app-servers.yml`**
+
+   * Installs MySQL on the DB server using the `geerlingguy.mysql` role.
+   * Deploys and starts the Java application on the web server.
 
 **Security:**
 
-* The database server is placed in a **private subnet**.
-* Internet access is routed through a **NAT Gateway**, ensuring isolation from direct public access.
+* The **database server** is in a **private subnet** and doesn't have direct internet access.
+* A **NAT Gateway** enables the DB server to download dependencies securely without being exposed publicly.
+
+**Outcome:**
+
+The Java application becomes accessible via:
+`http://<web-server-public-ip>:8080`
 
 ---
 
