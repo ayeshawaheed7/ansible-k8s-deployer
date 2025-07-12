@@ -4,5 +4,6 @@ metadata:
   name: db-configmap
   namespace: default
 data:
-  db-server: mysql-service
+  # db-server: mysql-service
+  db-server: mysql-primary.default
 

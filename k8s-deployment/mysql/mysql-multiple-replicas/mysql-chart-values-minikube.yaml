@@ -1,0 +1,15 @@
+architecture: replication
+auth:
+  rootPassword: my-secret-pass
+  database: my-app-db
+  username: my-user
+  password: my-pass
+
+primary:
+  persistence:
+    storageClass: standard
+
+secondary:
+  replicaCount: 2
+  persistence:
+    storageClass: standard
