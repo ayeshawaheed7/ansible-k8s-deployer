@@ -187,7 +187,7 @@ To ensure sensitive data is handled securely throughout the automation process, 
 ## Results
 
 * Fully automated provisioning and deployment for both traditional and Kubernetes-based environments.
-* Improved security and isolation of the database layer.
+* Enhanced security and isolation, using private networking, IAM roles, and encrypted secrets via Ansible Vault.
 * Seamless deployment workflows without manual steps.
 * Scalable, resilient application infrastructure with minimal operational overhead.
 
