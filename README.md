@@ -165,6 +165,25 @@ This playbook performs the following key tasks:
 
 ---
 
+### Security Practices
+
+To ensure sensitive data is handled securely throughout the automation process, **Ansible Vault** is used to encrypt all secrets and credentials, including:
+
+* Database passwords
+* SSH private keys
+* Docker registry credentials
+* Kubernetes secrets (when templated in Ansible)
+
+**Best practices followed:**
+
+* Encrypted secrets are stored in group-vars/vault.yaml.
+* No hardcoded credentials exist in playbooks or templates.
+* Vault is accessed at runtime using a password file or interactive prompt.
+* Secrets are rendered dynamically into Kubernetes manifests, ensuring secrets are never committed in plaintext.
+* This ensures that infrastructure automation remains secure, auditable, and production-ready while adhering to DevSecOps standards.
+
+---
+
 ## Results
 
 * Fully automated provisioning and deployment for both traditional and Kubernetes-based environments.
