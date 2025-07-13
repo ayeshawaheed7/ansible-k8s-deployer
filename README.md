@@ -73,21 +73,49 @@ The Java application becomes accessible via:
 
 ### Phase 2: Dockerized Deployment on Kubernetes
 
-To modernize the deployment:
+To modernize deployment and reduce manual operations, the application was migrated from traditional EC2-based infrastructure to a Kubernetes-based architecture. The goal was to simplify rollout, improve scalability, and streamline configuration through declarative and automated workflows.
 
 **Key Configurations:**
 
-* The Java application is containerized and pushed to a Docker registry.
-* Kubernetes manifests define:
+* The Java application was **containerized** and pushed to a **Docker registry**.
+* Kubernetes manifests were created for:
 
-  * **Deployments** and **Services** for Java and MySQL.
-  * **ConfigMaps** and **Secrets** for managing environment-specific configuration.
-* An **NGINX Ingress Controller** (deployed via Helm) enables browser-based access.
-* An **Ingress** resource exposes the Java app at a defined HTTP endpoint.
+  * **Deployments** and **Services** for both the Java application and the MySQL database (single replica).
+  * **ConfigMaps** to inject non-sensitive configuration variables into pods.
+  * **Secrets** to securely provide sensitive data like database credentials and Docker registry authentication.
+* An **NGINX Ingress Controller** was deployed via Helm to manage external HTTP traffic.
+* An **Ingress resource** exposed the Java application through a browser-friendly URL.
 
-**Automation:**
+**Execution Flow:**
 
-* All Kubernetes components are deployed using Ansible to simplify operations.
+The entire Kubernetes setup is automated using a dedicated Ansible playbook:
+
+1. **`deploy-k8s-app-db-single-replica.yaml`**
+
+   This playbook performs the following steps:
+
+   * **Create the MySQL ConfigMap**
+     Injects non-sensitive environment variables (like database name, host, etc.) into the MySQL pod using a manifest file (`db-configmap.yaml`).
+
+   * **Render and Apply Kubernetes Secrets from Template**
+     Templated secret files (`db-secret.yaml.j2`) are rendered using sensitive variables loaded from `group-vars/vault.yaml`, ensuring no plaintext secrets are exposed. This includes database usernames and passwords.
+
+   * **Deploy Docker Registry Secret**
+     A Kubernetes Secret of type `kubernetes.io/dockerconfigjson` is created to allow Kubernetes to pull private container images from Docker Hub using encoded credentials.
+
+   * **Deploy Applications**
+     The MySQL deployment (`mysql.yaml`) and the Java application (`java-app.yaml`) are applied to the cluster.
+
+   * **Deploy NGINX Ingress Controller via Helm**
+     Helm is used to deploy the ingress controller in the `ingress` namespace with service publishing enabled.
+
+   * **Deploy Java Application Ingress**
+     Finally, the ingress resource (`java-app-ingress.yaml`) is applied to route external traffic to the Java application service.
+
+**Outcome:**
+
+The application is successfully deployed in Kubernetes and becomes accessible at:
+`http://<nginx-ingress-loadbalancer-address>`
 
 ---
 
