@@ -119,12 +119,6 @@ The application is successfully deployed in Kubernetes and becomes accessible at
 
 ---
 
-Yes, it's worth mentioning more than just "MySQL is deployed with 3 replicas." Since the third phase is focused on **high availability**, it's helpful to highlight **how** that was achieved using Helm and Ansible, and what other supporting resources (e.g., Secrets, ConfigMaps, app deployments) are included in the playbook.
-
-Here’s an improved and complete write-up for **Phase 3** that reflects the structure and automation of your `deploy-k8s-app-db-multiple-replicas.yaml`:
-
----
-
 ### Phase 3: High Availability MySQL Using Helm
 
 To improve database availability and fault tolerance, the single-instance MySQL setup was replaced with a production-ready, multi-replica configuration using Helm.
