@@ -1,9 +1,9 @@
 architecture: replication
 auth:
-  rootPassword: my-secret-pass
-  database: my-app-db
-  username: my-user
-  password: my-pass
+  rootPassword: {{ db_root_pass }}
+  database: {{ db_name }}
+  username: {{ db_user }}
+  password: {{ db_pass }}
 
 primary:
   persistence:
