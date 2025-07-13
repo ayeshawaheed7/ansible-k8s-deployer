@@ -8,9 +8,9 @@
       kubernetes.core.k8s:
         src: ../k8s-manifests/db-configmap.yaml
         state: present
-    - name: Deploy DB secret
+    - name: Render and apply k8s secrets from template
       kubernetes.core.k8s:
-        src: ../k8s-manifests/db-secret.yaml
+        definition: "{{ lookup('template', '../k8s-manifests/db-secret.yaml.j2') | from_yaml }}"
         state: present
     - name: Deploy docker registry secret
       kubernetes.core.k8s:
