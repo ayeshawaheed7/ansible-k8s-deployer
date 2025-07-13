@@ -119,15 +119,55 @@ The application is successfully deployed in Kubernetes and becomes accessible at
 
 ---
 
+Yes, it's worth mentioning more than just "MySQL is deployed with 3 replicas." Since the third phase is focused on **high availability**, it's helpful to highlight **how** that was achieved using Helm and Ansible, and what other supporting resources (e.g., Secrets, ConfigMaps, app deployments) are included in the playbook.
+
+Here’s an improved and complete write-up for **Phase 3** that reflects the structure and automation of your `deploy-k8s-app-db-multiple-replicas.yaml`:
+
+---
+
 ### Phase 3: High Availability MySQL Using Helm
 
-To improve database reliability:
+To improve database availability and fault tolerance, the single-instance MySQL setup was replaced with a production-ready, multi-replica configuration using Helm.
 
-**Enhancement:**
+**Enhancements:**
 
-* MySQL is deployed using a **Helm chart** with **3 replicas** for high availability.
-* The single-instance MySQL setup is replaced with a production-ready, multi-pod configuration.
-* Helm deployments are fully automated via Ansible.
+* MySQL is deployed using the official **Bitnami Helm chart** with **3 replicas**.
+* Kubernetes resources such as Secrets, ConfigMaps, and application deployments are orchestrated alongside the Helm release.
+* All deployment steps are automated using the Ansible playbook:
+  **`deploy-k8s-app-db-multiple-replicas.yaml`**
+
+**Execution Flow:**
+
+This playbook performs the following key tasks:
+
+1. **Deploy NGINX Ingress Controller via Helm**
+
+   * Ensures external traffic can reach the application through a managed LoadBalancer setup.
+
+2. **Deploy MySQL Helm Chart (3 Replicas)**
+
+   * Uses a templated `mysql-chart-values-lke.yaml.j2` file to define MySQL configuration with high availability and replication support.
+   * Managed by Helm in the `default` namespace.
+
+3. **Apply ConfigMap and Secrets**
+
+   * A `db-configmap.yaml` is applied for non-sensitive configuration.
+   * Sensitive values like MySQL credentials are rendered from a Vault-encrypted `db-secret.yaml.j2` template and applied securely.
+
+4. **Deploy Docker Registry Secret**
+
+   * Authenticates with Docker Hub using a base64-encoded `.dockerconfigjson` secret, enabling Kubernetes to pull private container images.
+
+5. **Deploy Java Application and Ingress**
+
+   * The Java app is deployed alongside the HA MySQL backend.
+   * An ingress resource routes external HTTP traffic to the app via the ingress controller.
+
+**Outcome:**
+
+* A highly available MySQL deployment running with 3 pods ensures better fault tolerance and readiness for production load.
+* The Java application continues to be accessible via:
+  `http://<nginx-ingress-loadbalancer-address>`
 
 ---
 
