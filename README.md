@@ -1,4 +1,4 @@
-# Java + MySQL Deployment Automation on AWS: From EC2 to Kubernetes with Ansible & Helm
+# Automated Java + MySQL Deployment on AWS: EC2 to Kubernetes with Ansible & Helm
 
 ## Overview
 
