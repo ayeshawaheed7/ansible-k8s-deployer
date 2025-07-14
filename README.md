@@ -1,8 +1,8 @@
-# Java + MySQL Application Deployment: Traditional & Kubernetes-Based Automation
+# Java + MySQL Deployment Automation on AWS: From EC2 to Kubernetes with Ansible & Helm
 
 ## Overview
 
-This project automates the deployment of a Java web application backed by a MySQL database. It begins with a traditional virtual machine-based infrastructure on AWS and transitions into a modern, containerized Kubernetes setup. All provisioning and deployment tasks are automated using Ansible and Helm.
+This project automates the deployment of a Java web application backed by a MySQL database. It begins with a traditional virtual machine-based infrastructure on AWS and transitions into a modern, containerized Kubernetes setup. Provisioning, configuration, and deployments are fully automated using Ansible and Helm.
 
 ## Problem Statement
 
@@ -162,6 +162,30 @@ This playbook performs the following key tasks:
 * A highly available MySQL deployment running with 3 pods ensures better fault tolerance and readiness for production load.
 * The Java application continues to be accessible via:
   `http://<nginx-ingress-loadbalancer-address>`
+
+---
+
+### **EKS Cluster Setup (Common Prerequisite)**
+
+Before executing the Phase 2 and Phase 3 deployment playbooks, ensure your environment is authenticated and connected to the correct EKS cluster.
+
+```bash
+# Set up kubeconfig for your EKS cluster
+aws eks update-kubeconfig \
+  --name <cluster-name> \
+  --region <aws-region> \
+  --kubeconfig <kubeconfig-file>
+
+# Export to ensure Ansible, kubectl, and Helm use the correct config
+export KUBECONFIG=<kubeconfig-file>
+export K8S_AUTH_KUBECONFIG=$KUBECONFIG
+```
+
+This setup ensures:
+
+* `kubectl` uses the correct kubeconfig.
+* Ansible’s Kubernetes modules authenticate properly via `K8S_AUTH_KUBECONFIG`.
+* Helm can talk to the cluster without additional config.
 
 ---
 
